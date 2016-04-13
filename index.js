@@ -30,7 +30,8 @@ module.exports = function (str, opts) {
 	opts = objectAssign({
 		normalizeProtocol: true,
 		stripFragment: true,
-		stripWWW: true
+		stripWWW: true,
+    queryWhitelist: [],
 	}, opts);
 
 	if (typeof str !== 'string') {
@@ -86,8 +87,19 @@ module.exports = function (str, opts) {
 		delete urlObj.search;
 	}
 
+  var queryObj = queryString.parse(urlObj.search);
+
+  // whitelist has been provided, strip everything else
+  if (opts.queryWhitelist.length) {
+    var whitelist = new Set(opts.queryWhitelist);
+    Object.keys(queryObj).forEach(key => {
+      if (whitelist.has(key)) return;
+      delete queryObj[key];
+    });
+  }
+
 	// sort query parameters
-	urlObj.search = queryString.stringify(sortKeys(queryString.parse(urlObj.search)));
+	urlObj.search = queryString.stringify(sortKeys(queryObj));
 
 	// decode query parameters
 	urlObj.search = decodeURIComponent(urlObj.search);
